@@ -6,7 +6,7 @@
 #define MAX_ENC 6
 #define MAX_WEIGHT 8
 #define MIN_WEIGHT 3
-#define MAX_CARGO 10
+#define MAX_CARGO 300
 
 int **paletes, *nEPaletes, *destinos, **itens, *nEItens, *pItens, *pesos, **centralizadoras, *nECent, *paleteCent, **prodItem, *nEProd;
 int *prodPalete, *itemProd;
@@ -258,7 +258,10 @@ int geraC(){
     nECent = malloc(qCent * sizeof(int));
     if(!nECent)
         return 0;
-    memset(nECent,0,qCent);
+    //memset(nECent,0,qCent);
+    for(int i = 0; i < qCent; i++){
+        nECent[i] = 0;
+    }
 
     int maxDestinos = ceil((float) qDest / (float) qCent);
 
@@ -281,13 +284,34 @@ int geraC(){
 
     int n = 0;
     int m = 0;
+    #ifdef DEBUG
+    for(int i = 0; i < qCent; i++){
+        printf("ncent[%d] = %d\n", i, nECent[i]);
+    }
+    #endif     
     for(int i = 0; i < qDest; i++){
         centralizadoras[n][m] = auxId[i];
         nECent[n]++;
+        #ifdef DEBUG
+        printf("nECent[%d] = %d\n", n, nECent[n]);
+        #endif        
         n = (n + 1) % qCent;
         if(n == 0)
             m = (m + 1) % maxDestinos; //nao eh pra acontecer, mas por seguranca
     }
+
+    #ifdef DEBUG
+    printf("MaxDestinos: %d\n", maxDestinos);
+    for(int i = 0; i < qCent; i++){
+        printf("ncent[%d] = %d\n", i, nECent[i]);
+    }
+
+    for (int i = 0; i < qCent; i++){
+        for(int j = 0; j < nECent[i]; j++){
+            printf("centralizadoras[%d][%d] = %d\n", i, j, centralizadoras[i][j]);
+        }
+    }
+    #endif
 
 
     free(auxId);
@@ -388,7 +412,10 @@ int geraPI(){
     nEProd = malloc(qProd * sizeof(int));
     if(!nEProd)
         return 0;
-    memset(nEProd,0,qProd);
+    //memset(nEProd,0,qProd);
+    for(int i = 0; i < qProd; i++){
+        nEProd[i] = 0;
+    }
 
     for (int i = 0; i < qItem; i++){
         auxId[i] = i;
@@ -462,7 +489,10 @@ int atribuiItem(){
     if(!nEItens)
         return 0;
 
-    memset(nEItens,0,qItem);    
+    //memset(nEItens,0,qItem);    
+    for(int i = 0; i< qItem; i++){
+        nEItens[i] = 0;
+    }
 
     for (int i = 0; i < qPalete; i++){
         for (int j = 0; j < nEPaletes[i]; j++){
@@ -606,9 +636,9 @@ int main(int argc, char *argv[]){
     }
     
 
-
-    if(geraPalete() && geraId() && geraC() && distribuiPalete() && geraPI())
+    if(geraPalete() && geraId() && geraC() && distribuiPalete() && geraPI()){
         printOutput();
+    }
     else
         fprintf(stderr,"Erro de Alocacao \n");
 
