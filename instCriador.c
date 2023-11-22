@@ -4,13 +4,31 @@
 #include <time.h>
 #include <math.h>
 #define MAX_ENC 6
-#define MAX_WEIGHT 8
-#define MIN_WEIGHT 3
-#define MAX_CARGO 300
+#define MAX_WEIGHT 3 //8
+#define MIN_WEIGHT 1 //3
+#define MAX_CARGO 6 //300
+#define K_ADJ 0 //60
 
-int **paletes, *nEPaletes, *destinos, **itens, *nEItens, *pItens, *pesos, **centralizadoras, *nECent, *paleteCent, **prodItem, *nEProd;
+int **paletes, *nEPaletes, *destinos, **itens, *nEItens, *pItens, *pesos, **centralizadoras, *nECent, *paleteCent, **prodItem, *nEProd, *cent;
 int *prodPalete, *itemProd;
 int qEncomenda, qItem, qDest, qCent, qProd, T, cPalete, qPalete, erro;
+
+
+void swap(int* xp, int* yp)
+{
+    int temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+  
+void bubbleSort(int *v, int n){ 
+    if (n < 1)return; 
+ 
+    for (int i=0; i<n; i++) 
+        if (v[i] > v[i+1]) 
+            swap(&v[i], &v[i+1]);  
+    bubbleSort(v, n-1); 
+} 
 
 
 void shuffle(int *array, size_t n)
@@ -31,6 +49,7 @@ void shuffle(int *array, size_t n)
 void printPalete(){
     for(int i = 0; i < qPalete; i++){
         fprintf(stderr,"palete %d: ", i);
+        bubbleSort(paletes[i],nEPaletes[i]-1);
         for(int j = 0; j < nEPaletes[i]; j++){
             fprintf(stderr,"%d ", paletes[i][j]);
         }
@@ -39,8 +58,20 @@ void printPalete(){
 
 }
 
+void ajustaCent(){
+    cent = malloc(qDest * sizeof(int));
+
+
+    for (int i = 0; i < qCent; i++){
+        for (int j = 0; j < nECent[i]; j++){
+            cent[centralizadoras[i][j]] = i;
+        }
+    }
+}
+
 void printOutput(){
-    printPalete();
+
+    printf("%% MAX_WEIGHT %d, MIN_WEIGHT %d, MAX_CARGO %d, K_ADJ %d\n", MAX_WEIGHT, MIN_WEIGHT,MAX_CARGO,K_ADJ);
     printf("qtd_Itens           = %d;\n",qItem);
     printf("qtd_Encomendas           = %d;\n",qEncomenda);
     printf("qtd_Destinatarios           = %d;\n",qDest);
@@ -48,6 +79,10 @@ void printOutput(){
     printf("qtd_Produtores           = %d;\n",qProd);
     printf("T           = %d;\n",qEncomenda);
     printf("CapacidadePalete           = %d;\n",MAX_CARGO);
+
+    #ifdef GLOB
+    printf("CapacidadePaleteEnglobado     = %d;\n", MAX_CARGO * 2 + 1);
+    #endif
 
     printf("dest = [");
     for (int i = 0; i < qEncomenda; i++){
@@ -84,17 +119,11 @@ void printOutput(){
     }
     printf("];\n");
 
+    ajustaCent();
     printf("cent = [");
-    for(int j = 0; j < qCent; j++){
-        printf("{");
-        for(int k = 0; k < nECent[j]; k++){
-            printf("%d", centralizadoras[j][k]+1);
-            if ( k < nECent[j] - 1){
-                printf(",");
-            }
-        }
-        printf("}");
-        if(j < qCent - 1){
+    for(int j = 0; j < qDest; j++){
+        printf("{%d}",cent[j]+1);
+        if(j < qDest - 1){
             printf(",");
         }
 
@@ -118,6 +147,7 @@ void printOutput(){
     }
 
     printf("];\n");
+    printPalete();
 
     //imprimir centralizadoras
     //imprimir qtd
@@ -155,7 +185,7 @@ int geraPalete(){
         //gera um produto de peso entre 3 ~ 8 e joga no palete
         numEnc = 0;
         totalW = 0;
-        while(totalW < MAX_CARGO - MIN_WEIGHT + 1){
+        while(totalW < MAX_CARGO - MIN_WEIGHT + 1 - K_ADJ){
             //gere um peso e atribua ao palete até sobrar no maximo 2 de espaço
             newW = MIN_WEIGHT + rand() % (MAX_WEIGHT - MIN_WEIGHT + 1);
             if (!((newW + totalW) > MAX_CARGO)){
@@ -604,6 +634,9 @@ void limpaDados(){
 
     if(pesos)
         free(pesos);
+
+    if(cent)
+        free(cent);
 
 }
 
